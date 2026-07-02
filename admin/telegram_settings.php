@@ -18,9 +18,13 @@ while ($row = $settings_stmt->fetch()) {
 $bot_token = $settings['TG_BOT_TOKEN'] ?? TG_BOT_TOKEN;
 $admin_chat = $settings['TG_ADMIN_CHAT_ID'] ?? TG_ADMIN_CHAT_ID;
 
-// Auto-detect webhook URL
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$webhook_url = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/api/telegram_bot.php';
+// Auto-detect webhook URL (works behind Cloudflare/reverse proxy)
+$scheme = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (!empty($_SERVER['HTTP_CF_VISITOR']) && strpos($_SERVER['HTTP_CF_VISITOR'], 'https') !== false)
+    ? 'https' : 'https'; // Default to HTTPS for production
+$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'your-domain.com';
+$webhook_url = $scheme . '://' . $host . '/api/telegram_bot.php';
 
 // Fetch linked accounts
 $linked = [];
