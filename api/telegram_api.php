@@ -274,12 +274,16 @@ switch ($action) {
             'TG_TPL_CANCEL' => "❌ <b>Запись отменена</b>\n\nПациент: {patient}\nВрач: {doctor}\nДата: {date} {time}",
             'TG_TPL_SCHEDULE' => "📅 <b>Изменение расписания</b>\n\nВрач: {doctor}\nДата: {date}\n{details}",
         ];
+        // Single query instead of 7
+        $keys = array_keys($tpl_keys);
+        $placeholders = implode(',', array_fill(0, count($keys), '?'));
+        $stmt = $pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ({$placeholders})");
+        $stmt->execute($keys);
+        $db_settings = [];
+        while ($row = $stmt->fetch()) { $db_settings[$row['setting_key']] = $row['setting_value']; }
         $result = [];
         foreach ($tpl_keys as $key => $default) {
-            $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-            $stmt->execute([$key]);
-            $val = $stmt->fetchColumn();
-            $result[$key] = !empty($val) ? $val : $default;
+            $result[$key] = $db_settings[$key] ?? $default;
         }
         echo json_encode(['success' => true, 'templates' => $result]);
         exit;

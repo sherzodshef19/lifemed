@@ -261,7 +261,7 @@ $app_name = $global_settings['clinic_name'] ?? 'LiFe Med';
 
     <!-- Core JS dependencies (Local for Offline) -->
     <script src="/assets/vendor/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/vendor/js/vue.global.js"></script>
+    <script src="/assets/vendor/js/vue.global.prod.js"></script>
     <script src="/assets/vendor/js/axios.min.js"></script>
 
     <!-- PWA Registration -->

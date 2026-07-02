@@ -216,31 +216,28 @@ function generateReceiptPdf($receipt_id, $pdo) {
 // ==================== Role Detection ====================
 
 function detectUserRole($chat_id, $pdo) {
-    // Check admin/user
-    $stmt = $pdo->prepare("SELECT id, full_name, role FROM users WHERE telegram_id = ?");
-    $stmt->execute([$chat_id]);
-    $user = $stmt->fetch();
-    if ($user && $user['role'] === 'admin') {
-        return ['role' => 'admin', 'data' => $user];
-    }
+    static $cache = [];
+    $key = (string)$chat_id;
+    if (isset($cache[$key])) return $cache[$key];
 
-    // Check doctor
-    $stmt = $pdo->prepare("SELECT id, full_name FROM doctors WHERE telegram_id = ?");
-    $stmt->execute([$chat_id]);
-    $doctor = $stmt->fetch();
-    if ($doctor) {
-        return ['role' => 'doctor', 'data' => $doctor];
-    }
+    // Single UNION query instead of 3 separate queries
+    $stmt = $pdo->prepare("
+        SELECT 'admin' as role, id, full_name FROM users WHERE telegram_id = ? AND role = 'admin'
+        UNION ALL
+        SELECT 'doctor' as role, id, full_name FROM doctors WHERE telegram_id = ?
+        UNION ALL
+        SELECT 'patient' as role, id, full_name FROM patients WHERE telegram_id = ? AND (deleted_at IS NULL)
+        LIMIT 1
+    ");
+    $stmt->execute([$chat_id, $chat_id, $chat_id]);
+    $row = $stmt->fetch();
 
-    // Check patient
-    $stmt = $pdo->prepare("SELECT id, full_name, phone FROM patients WHERE telegram_id = ?");
-    $stmt->execute([$chat_id]);
-    $patient = $stmt->fetch();
-    if ($patient) {
-        return ['role' => 'patient', 'data' => $patient];
+    if ($row) {
+        $cache[$key] = ['role' => $row['role'], 'data' => ['id' => $row['id'], 'full_name' => $row['full_name']]];
+    } else {
+        $cache[$key] = null;
     }
-
-    return null;
+    return $cache[$key];
 }
 
 // ==================== Link Commands ====================

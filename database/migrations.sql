@@ -160,3 +160,111 @@ CREATE TABLE IF NOT EXISTS telegram_blacklist (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_chat_id (chat_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================== PERFORMANCE INDEXES ====================
+
+-- Index on appointment_date (used in daily queries, reports, doctor panel)
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'appointments' AND index_name = 'idx_appointment_date') = 0,
+    'ALTER TABLE appointments ADD INDEX idx_appointment_date (appointment_date)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Composite index for doctor daily schedule
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'appointments' AND index_name = 'idx_doctor_date') = 0,
+    'ALTER TABLE appointments ADD INDEX idx_doctor_date (doctor_id, appointment_date)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Index on receipt_id for receipt lookups
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'appointments' AND index_name = 'idx_receipt_id') = 0,
+    'ALTER TABLE appointments ADD INDEX idx_receipt_id (receipt_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Index on payment_status for unpaid count
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'appointments' AND index_name = 'idx_payment_status') = 0,
+    'ALTER TABLE appointments ADD INDEX idx_payment_status (payment_status)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Patient search indexes
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'patients' AND index_name = 'idx_full_name') = 0,
+    'ALTER TABLE patients ADD INDEX idx_full_name (full_name)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'patients' AND index_name = 'idx_phone') = 0,
+    'ALTER TABLE patients ADD INDEX idx_phone (phone)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'patients' AND index_name = 'idx_deleted_at') = 0,
+    'ALTER TABLE patients ADD INDEX idx_deleted_at (deleted_at)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Telegram ID indexes (for webhook user detection)
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'users' AND index_name = 'idx_telegram_id') = 0,
+    'ALTER TABLE users ADD INDEX idx_telegram_id (telegram_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'doctors' AND index_name = 'idx_telegram_id') = 0,
+    'ALTER TABLE doctors ADD INDEX idx_telegram_id (telegram_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'patients' AND index_name = 'idx_telegram_id') = 0,
+    'ALTER TABLE patients ADD INDEX idx_telegram_id (telegram_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Lab results index on template_id
+SET @sql = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = 'lifemed' AND table_name = 'lab_results' AND index_name = 'idx_template_id') = 0,
+    'ALTER TABLE lab_results ADD INDEX idx_template_id (template_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
