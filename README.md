@@ -108,7 +108,7 @@ LifeMed CRM — tibbiyot klinikasini boshqarish uchun to'liq tizim. Bemorlarni r
 
 ### Muallif
 
-**Sherzod Islomov** — Kasansay, O'zbekiston dasturchisi
+**Sherzod Islomov** — Kosonsoy, O'zbekiston dasturchisi
 
 ---
 
