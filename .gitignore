@@ -1,0 +1,21 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# PHP
+*.log
+error.log
+
+# Temp
+*.tmp
+*.swp
+
+# Node (if any)
+node_modules/
+
+# Config with secrets (keep config.php tracked but note it has credentials)
+# config/config.php
