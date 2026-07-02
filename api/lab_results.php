@@ -12,7 +12,7 @@ switch ($method) {
         $offset = ($page - 1) * $limit;
         $q = sanitize_string($_GET['q'] ?? '');
 
-        $query = "SELECT SQL_CALC_FOUND_ROWS r.*, t.title as template_title, d.full_name as doctor_name, p.full_name as patient_name, p.id as patient_id 
+        $query = "SELECT r.*, t.title as template_title, d.full_name as doctor_name, p.full_name as patient_name, p.id as patient_id 
                   FROM lab_results r 
                   JOIN lab_templates t ON r.template_id = t.id 
                   LEFT JOIN doctors d ON r.doctor_id = d.id
@@ -54,7 +54,16 @@ switch ($method) {
         $stmt->execute($params);
         $results = $stmt->fetchAll();
 
-        $totalCount = $pdo->query("SELECT FOUND_ROWS()")->fetchColumn();
+        // Separate COUNT query instead of deprecated SQL_CALC_FOUND_ROWS
+        $countQuery = "SELECT COUNT(*) FROM lab_results r 
+                       JOIN lab_templates t ON r.template_id = t.id 
+                       LEFT JOIN doctors d ON r.doctor_id = d.id
+                       JOIN patients p ON r.patient_id = p.id";
+        if ($where) { $countQuery .= " WHERE " . implode(" AND ", $where); }
+        $countParams = array_slice($params, 0, -2); // exclude LIMIT/OFFSET
+        $countStmt = $pdo->prepare($countQuery);
+        $countStmt->execute($countParams);
+        $totalCount = $countStmt->fetchColumn();
 
         if (isset($_GET['id']) && !isset($_GET['q'])) {
             api_success($results[0] ?? null);

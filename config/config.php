@@ -46,7 +46,14 @@ if (APP_DEBUG) {
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../error.log');
 
-// Session
+// Session security
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_strict_mode', 1);
+ini_set('session.cookie_samesite', 'Lax');
+if (!APP_DEBUG) {
+    ini_set('session.cookie_secure', 1); // HTTPS only in production
+}
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }

@@ -307,7 +307,9 @@ switch ($action) {
         $stmt->execute($params);
         $logs = $stmt->fetchAll();
 
-        $countStmt = $pdo->query("SELECT COUNT(*) FROM telegram_logs" . ($direction ? " WHERE direction = '" . $direction . "'" : ''));
+        $countParams = $params ? array_slice($params, 0, -2) : [];
+        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM telegram_logs" . ($where ? " $where" : ''));
+        $countStmt->execute($countParams);
         $total = $countStmt->fetchColumn();
 
         echo json_encode(['success' => true, 'logs' => $logs, 'total' => $total]);

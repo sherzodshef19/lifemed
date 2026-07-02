@@ -386,11 +386,49 @@ function backupDatabase($pdo) {
     $chat_id = getAdminChatId($pdo);
     if (empty($chat_id)) return;
 
-    $db_name = 'lifemed';
     $path = sys_get_temp_dir() . '/backup_' . date('Y-m-d_His') . '.sql';
+    $fp = @fopen($path, 'w');
+    if (!$fp) return;
 
-    $cmd = "C:\\OSPanel\\modules\\database\\MySQL-8.0-x64\\bin\\mysqldump.exe -u root $db_name > \"$path\" 2>&1";
-    exec($cmd);
+    // Get all tables
+    $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+
+    fwrite($fp, "-- LifeMed CRM Backup " . date('Y-m-d H:i:s') . "\n");
+    fwrite($fp, "-- Database: " . DB_NAME . "\n\n");
+    fwrite($fp, "SET FOREIGN_KEY_CHECKS=0;\n\n");
+
+    foreach ($tables as $table) {
+        // Table structure
+        $create = $pdo->query("SHOW CREATE TABLE `$table`")->fetch();
+        fwrite($fp, "DROP TABLE IF EXISTS `$table`;\n");
+        fwrite($fp, $create['Create Table'] . ";\n\n");
+
+        // Data
+        $rows = $pdo->query("SELECT * FROM `$table`")->fetchAll(PDO::FETCH_NUM);
+        if (!empty($rows)) {
+            // Get column count for VALUES placeholder
+            $colCount = count($rows[0]);
+            $placeholders = '(' . implode(',', array_fill(0, $colCount, '?')) . ')';
+
+            $stmt = $pdo->prepare("INSERT INTO `$table` VALUES $placeholders");
+            foreach ($rows as $row) {
+                $vals = array_map(function($v) { return $v; }, $row);
+                $stmt->execute($vals);
+                $line = 'INSERT INTO `' . $table . '` VALUES(';
+                $parts = [];
+                foreach ($row as $v) {
+                    if ($v === null) { $parts[] = 'NULL'; }
+                    else { $parts[] = "'" . addslashes($v) . "'"; }
+                }
+                $line .= implode(',', $parts) . ");\n";
+                fwrite($fp, $line);
+            }
+        }
+        fwrite($fp, "\n");
+    }
+
+    fwrite($fp, "SET FOREIGN_KEY_CHECKS=1;\n");
+    fclose($fp);
 
     if (file_exists($path) && filesize($path) > 0) {
         tgSendDocument($chat_id, $path, "💾 Бэкап БД за " . date('d.m.Y H:i'));
