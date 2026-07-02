@@ -45,6 +45,41 @@ function validate_required($data, $fields) {
 }
 
 /**
+ * Validate password strength
+ * Minimum 6 chars, at least 1 letter and 1 digit
+ */
+function validate_password($password) {
+    if (strlen($password) < 6) {
+        return 'Пароль должен быть не менее 6 символов';
+    }
+    if (!preg_match('/[a-zA-Z]/', $password)) {
+        return 'Пароль должен содержать хотя бы одну букву';
+    }
+    if (!preg_match('/[0-9]/', $password)) {
+        return 'Пароль должен содержать хотя бы одну цифру';
+    }
+    return null; // OK
+}
+
+/**
+ * Sanitize HTML content — strip dangerous tags and event handler attributes
+ */
+function sanitize_html($html) {
+    // Remove script, style, iframe, object, embed, form tags entirely (with content)
+    $html = preg_replace('#<(script|style|iframe|object|embed|form|textarea|input|button)[^>]*>.*?</\1>#is', '', $html);
+    $html = preg_replace('#<(script|style|iframe|object|embed|form|textarea|input|button)[^>]*/?>#is', '', $html);
+
+    // Strip all on* event handler attributes
+    $html = preg_replace('#\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)#is', '', $html);
+
+    // Remove javascript: and data: URLs in href/src attributes
+    $html = preg_replace('#((?:href|src|action)\s*=\s*)("javascript:[^"]*"|\'javascript:[^\']*\'|javascript:[^\s>]+)#is', '$1"#', $html);
+    $html = preg_replace('#((?:href|src|action)\s*=\s*)("data:[^"]*"|\'data:[^\']*\'|data:[^\s>]+)#is', '$1"#', $html);
+
+    return $html;
+}
+
+/**
  * Sanitize string input
  */
 function sanitize_string($value) {
@@ -76,6 +111,11 @@ function csrf_field() {
 function csrf_verify() {
     if (session_status() === PHP_SESSION_NONE) session_start();
     $token = $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    // Also check JSON body for csrf_token field
+    if (empty($token)) {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $token = $input['_csrf_token'] ?? '';
+    }
     return !empty($token) && hash_equals($_SESSION['csrf_token'] ?? '', $token);
 }
 
@@ -141,7 +181,8 @@ function column_exists($pdo, $table, $column) {
     $key = $table . '.' . $column;
     if (isset($cache[$key])) return $cache[$key];
     try {
-        $stmt = $pdo->query("SHOW COLUMNS FROM `$table` LIKE '$column'");
+        $stmt = $pdo->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
+        $stmt->execute([$column]);
         $cache[$key] = $stmt->fetch() !== false;
     } catch (PDOException $e) {
         $cache[$key] = false;

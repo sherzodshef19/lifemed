@@ -13,5 +13,9 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+    error_log('DB connection failed: ' . $e->getMessage());
+    if (defined('APP_DEBUG') && APP_DEBUG) {
+        die("Database connection failed: " . $e->getMessage());
+    }
+    die("Database connection failed. Check configuration.");
 }

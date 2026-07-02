@@ -74,8 +74,8 @@ include '../includes/header.php';
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Пароль {{ editingId ? '(оставьте пустым для сохранения текущего)' : '' }}</label>
-                            <input type="password" v-model="form.password" class="form-control" :required="!editingId" minlength="1" maxlength="64">
-                            <div class="form-text">От 1 до 64 символов</div>
+                            <input type="password" v-model="form.password" class="form-control" :required="!editingId" minlength="6" maxlength="64">
+                            <div class="form-text">Минимум 6 символов, буква + цифра</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Роль</label>

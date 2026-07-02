@@ -1,8 +1,12 @@
 <?php
-require_once '../config/db.php';
-require_once '../includes/auth_functions.php';
+require_once '../includes/api_auth.php';
 require_once '../config/config.php';
-check_role(['admin']);
+require_admin();
+
+// CSRF verification for mutating requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !csrf_verify()) {
+    api_error('CSRF token mismatch', 403);
+}
 
 header('Content-Type: application/json; charset=utf-8');
 $input = json_decode(file_get_contents('php://input'), true);

@@ -52,17 +52,19 @@ try {
                     $doctor_id = $data['id'];
 
                     if (!empty($data['password'])) {
-                        if (strlen($data['password']) < 1 || strlen($data['password']) > 64) {
+                        $pw_error = validate_password($data['password']);
+                        if ($pw_error) {
                             $pdo->rollBack();
-                            api_error('Пароль должен быть от 1 до 64 символов');
+                            api_error($pw_error);
                         }
                         $pdo->prepare("UPDATE doctors SET password = ? WHERE id = ?")->execute([password_hash($data['password'], PASSWORD_DEFAULT), $doctor_id]);
                     }
                     audit_log($pdo, 'update', 'doctor', $doctor_id);
                 } else {
-                    if (empty($data['password']) || strlen($data['password']) < 1 || strlen($data['password']) > 64) {
+                    $pw_error = validate_password($data['password'] ?? '');
+                    if ($pw_error) {
                         $pdo->rollBack();
-                        api_error('Пароль должен быть от 1 до 64 символов');
+                        api_error($pw_error);
                     }
                     // Check username uniqueness
                     $check = $pdo->prepare("SELECT id FROM doctors WHERE username = ?");

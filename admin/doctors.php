@@ -100,8 +100,8 @@ include '../includes/header.php';
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold small text-secondary">Пароль {{ editingId ? '(пусто = без изменений)' : '' }}</label>
-                                <input type="password" v-model="form.password" class="form-control" :required="!editingId" minlength="1" maxlength="64">
-                                <div class="form-text">От 1 до 64 символов</div>
+                                <input type="password" v-model="form.password" class="form-control" :required="!editingId" minlength="6" maxlength="64">
+                                <div class="form-text">Минимум 6 символов, буква + цифра</div>
                             </div>
                         </div>
                         <div class="mt-2">

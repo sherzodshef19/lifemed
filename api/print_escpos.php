@@ -18,7 +18,9 @@ if ($receipt_id) {
     ");
     $stmt->execute([$receipt_id]);
 } elseif ($ids) {
-    $id_array = explode(',', $ids);
+    $id_array = array_map('intval', explode(',', $ids));
+    $id_array = array_filter($id_array);
+    if (empty($id_array)) die(json_encode(['success' => false, 'error' => 'Invalid IDs']));
     $placeholders = implode(',', array_fill(0, count($id_array), '?'));
     $stmt = $pdo->prepare("
         SELECT a.*, p.id as patient_id, p.full_name as patient, p.phone as patient_phone, p.dob as patient_dob, d.full_name as doctor, d.specialty_id, sp.name as doctor_specialty, s.name as service, s.price, sd.name as direction

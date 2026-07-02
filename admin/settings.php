@@ -7,7 +7,10 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['update_settings'])) {
+    // CSRF verification
+    if (!csrf_verify()) {
+        $error = 'CSRF token mismatch. Попробуйте ещё раз.';
+    } else if (isset($_POST['update_settings'])) {
         $clinic_name = $_POST['clinic_name'];
         $clinic_phone = $_POST['clinic_phone'];
         $telegram = $_POST['telegram'] ?? '';
@@ -74,6 +77,7 @@ include '../includes/header.php';
                 <?php endif; ?>
 
                 <form method="POST" enctype="multipart/form-data">
+                    <?= csrf_field() ?>
                     <div class="mb-4">
                         <label class="form-label text-secondary small">Логотип клиники</label>
                         <div class="d-flex align-items-center gap-3 mb-2">

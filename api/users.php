@@ -20,17 +20,15 @@ switch ($method) {
             $stmt->execute([sanitize_string($data['full_name']), sanitize_string($data['username']), sanitize_string($data['role']), $data['id']]);
 
             if (!empty($data['password'])) {
-                if (strlen($data['password']) < 1 || strlen($data['password']) > 64) {
-                    api_error('Пароль должен быть от 1 до 64 символов');
-                }
+                $pw_error = validate_password($data['password']);
+                if ($pw_error) api_error($pw_error);
                 $hash = password_hash($data['password'], PASSWORD_DEFAULT);
                 $pdo->prepare("UPDATE users SET password = ? WHERE id = ?")->execute([$hash, $data['id']]);
             }
             audit_log($pdo, 'update', 'user', $data['id']);
         } else {
-            if (empty($data['password']) || strlen($data['password']) < 1 || strlen($data['password']) > 64) {
-                api_error('Пароль должен быть от 1 до 64 символов');
-            }
+            $pw_error = validate_password($data['password'] ?? '');
+            if ($pw_error) api_error($pw_error);
             // Check username uniqueness
             $check = $pdo->prepare("SELECT id FROM users WHERE username = ?");
             $check->execute([sanitize_string($data['username'])]);

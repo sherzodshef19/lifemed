@@ -409,6 +409,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method not allowed');
 }
 
+// Verify webhook secret token
+$webhook_secret = '';
+try {
+    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'TG_WEBHOOK_SECRET'");
+    $stmt->execute();
+    $webhook_secret = $stmt->fetchColumn();
+} catch (Exception $e) { /* table may not exist yet */ }
+
+if (!empty($webhook_secret)) {
+    $provided_secret = $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '';
+    if (!hash_equals($webhook_secret, $provided_secret)) {
+        http_response_code(403);
+        exit('Forbidden: invalid secret token');
+    }
+}
+
 if (empty(getBotToken($pdo))) {
     exit('Bot token not configured');
 }

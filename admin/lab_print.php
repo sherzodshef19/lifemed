@@ -123,10 +123,8 @@ $clinic_name = $settings['clinic_name'] ?? 'LifeMed Clinic';
 
         <div class="results-container">
             <?php
-            // Content is from trusted lab templates. Sanitize at save-time in API.
-            // Only allow safe tags: tables, formatting, basic structure
-            $allowed = '<table><thead><tbody><tr><th><td><p><br><b><i><u><strong><em><span><div><h1><h2><h3><h4><h5><h6><ul><ol><li><img><style>';
-            echo strip_tags($content, $allowed);
+            // Sanitize HTML: strip dangerous tags (script, iframe, style) and event handlers
+            echo sanitize_html($content);
             ?>
         </div>
 

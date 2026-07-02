@@ -17,5 +17,5 @@ error.log
 # Node (if any)
 node_modules/
 
-# Config with secrets (keep config.php tracked but note it has credentials)
-# config/config.php
+# Environment secrets — NEVER commit this file
+.env

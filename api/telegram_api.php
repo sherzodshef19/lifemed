@@ -1,8 +1,12 @@
 <?php
-require_once '../config/db.php';
-require_once '../includes/auth_functions.php';
+require_once '../includes/api_auth.php';
 require_once '../config/config.php';
-check_role(['admin']);
+require_admin();
+
+// CSRF verification for mutating requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !csrf_verify()) {
+    api_error('CSRF token mismatch', 403);
+}
 
 header('Content-Type: application/json; charset=utf-8');
 $input = json_decode(file_get_contents('php://input'), true);
@@ -105,10 +109,20 @@ switch ($action) {
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $webhookUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/api/telegram_bot.php';
 
+        // Generate or reuse secret token for webhook verification
+        $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'TG_WEBHOOK_SECRET'");
+        $stmt->execute();
+        $secret = $stmt->fetchColumn();
+        if (empty($secret)) {
+            $secret = bin2hex(random_bytes(32));
+            $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES ('TG_WEBHOOK_SECRET', ?)")->execute([$secret]);
+        }
+
         $result = tgApiCall($token, 'setWebhook', [
             'url' => $webhookUrl,
             'max_connections' => 40,
             'allowed_updates' => ['message', 'callback_query'],
+            'secret_token' => $secret,
         ]);
 
         if (!empty($result['ok'])) {

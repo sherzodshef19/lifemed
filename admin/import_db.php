@@ -37,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['sql_file'])) {
                     $success = "Импорт завершён. Выполнено запросов: $executed";
                     audit_log($pdo, 'import_database', 'system', null, ['statements' => $executed]);
                 } catch (PDOException $e) {
-                    $error = 'Ошибка SQL: ' . $e->getMessage();
+                    error_log('SQL import error: ' . $e->getMessage());
+                    $error = 'Ошибка SQL. Проверьте формат файла.';
                 }
             }
         }

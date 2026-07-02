@@ -501,11 +501,13 @@ include '../includes/header.php';
 
 <script>
 const API_URL = '../api/telegram_api.php';
+const CSRF_TOKEN = '<?= csrf_token() ?>';
 
 async function apiPost(data) {
+    data._csrf_token = CSRF_TOKEN;
     const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
         body: JSON.stringify(data)
     });
     return res.json();
